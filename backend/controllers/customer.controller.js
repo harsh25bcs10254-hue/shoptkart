@@ -3,6 +3,13 @@ import customers from '../models/customer.model.js'
 import bcrypt from 'bcrypt'
 import generateToken from '../utils/generateToken.js'
 
+const authCookieOptions = {
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 7 * 24 * 60 * 60 * 1000
+}
+
 const registerCustomer = async (req,res)=>{
     const {fullname,email,password,phoneno} = req.body
     
@@ -74,12 +81,7 @@ const loginCustomer = async (req,res) => {
 }
 
     const token = generateToken(customer._id)
-    res.cookie('token', token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 7 * 24 * 60 * 60 * 1000
-    })
+    res.cookie('token', token, authCookieOptions)
 
     return res.status(200).json({
         message: "Login successful",
@@ -93,11 +95,7 @@ const getMyProfile = async (req,res)=>{
 }
 
 const logoutCustomer = (req,res)=>{
-    res.clearCookie('token', {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production'
-    })
+    res.clearCookie('token', authCookieOptions)
 
     return res.status(200).json({
         success: true,
@@ -106,4 +104,3 @@ const logoutCustomer = (req,res)=>{
 }
 
 export { registerCustomer, loginCustomer, getMyProfile, logoutCustomer }
-
