@@ -1,7 +1,34 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useCart } from '../context/useCart'
+import { useWishlist } from '../context/useWishlist'
 
 function ProductCard({product}) {
   const isOutOfStock = product.stock === 0
+  const [wishlistError, setWishlistError] = useState('')
+  const [cartError, setCartError] = useState('')
+  const { addToCart, actionLoadingId } = useCart()
+  const { addToWishlist, isInWishlist, loading: wishlistLoading } = useWishlist()
+  const isAddingToCart = actionLoadingId === product._id
+  const isSaved = isInWishlist(product._id)
+
+  const handleAddToCart = async () => {
+    setCartError('')
+    try {
+      await addToCart(product._id)
+    } catch (error) {
+      setCartError(error.message)
+    }
+  }
+
+  const handleAddToWishlist = async () => {
+    setWishlistError('')
+    try {
+      await addToWishlist(product._id)
+    } catch (error) {
+      setWishlistError(error.message)
+    }
+  }
 
   return (
     <article className="overflow-hidden rounded-2xl border border-[#dfe6dc] bg-white shadow-[0_12px_35px_rgba(43,58,45,0.05)] transition hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(43,58,45,0.1)]">
@@ -20,6 +47,24 @@ function ProductCard({product}) {
         <Link to={`/products/${product._id}`} className="mt-5 block rounded-xl bg-[#17211b] px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-[#e56b45]">
           View Details
         </Link>
+        <button
+          type="button"
+          onClick={handleAddToCart}
+          disabled={isAddingToCart || isOutOfStock}
+          className="mt-3 w-full rounded-xl bg-[#e56b45] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#c95333] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isOutOfStock ? 'Out of Stock' : isAddingToCart ? 'Adding...' : 'Add to Cart'}
+        </button>
+        {cartError && <p role="alert" className="mt-2 text-sm text-[#bd482a]">{cartError}</p>}
+        <button
+          type="button"
+          onClick={handleAddToWishlist}
+          disabled={wishlistLoading || isSaved}
+          className="mt-3 w-full rounded-xl border border-[#d5dfd3] px-4 py-3 text-sm font-bold text-[#536157] transition hover:border-[#e56b45] hover:text-[#c95333] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {wishlistLoading ? 'Checking Wishlist...' : isSaved ? '♥ Added to Wishlist' : '♡ Add to Wishlist'}
+        </button>
+        {wishlistError && <p role="alert" className="mt-2 text-sm text-[#bd482a]">{wishlistError}</p>}
       </div>
     </article>
   )
